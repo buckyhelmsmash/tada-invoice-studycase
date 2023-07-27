@@ -1,8 +1,6 @@
 // Invoice.ts
 export interface Invoice {
     id: string;
-    due: Date;
-    clientName: string;
     amount: number;
     status: 'draft' | 'pending' | 'paid';
     sender: {
@@ -24,6 +22,6 @@ export interface Invoice {
         item_name: string;
         qty: number;
         price: number;
-        total: number; // This property can be calculated as qty * price
+        total: number;
     }[];
 }
