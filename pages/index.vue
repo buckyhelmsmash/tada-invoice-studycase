@@ -24,8 +24,8 @@
 
         <div v-if="invoices.length > 0">
             <div class="main-content">
-                <el-card v-for="invoice in invoices" :key="invoice.id">
-                    <div class="card-container">
+                <el-card v-for="invoice in invoices" :key="invoice.id" shadow="hover" class="cursor-pointer">
+                    <div class="card-container" @click="redirectToInvoiceDetail(invoice.id)">
                         <div class="desktop-view">
                             <!-- Content for desktop view -->
                             <p class="font-bold">#{{ invoice.id }}</p>
@@ -43,7 +43,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: flex-end">
                                 <div>
-                                    <p>Due: {{ formatDate(invoice.due) }}</p>
+                                    <p>Due: {{ formatDate(invoice.dueDate) }}</p>
                                     <p>Rp {{ invoice.amount.toLocaleString() }}</p>
                                 </div>
                                 <el-tag :type="getStatusTagType(invoice.status)" class="capitalize p-4">{{ invoice.status }}</el-tag>
@@ -189,7 +189,8 @@
             <el-button @click="addItem" plain>Add Item</el-button>
 
             <div class="mt-2">
-                <el-button type="primary" @click="submitForm" :loading="formSubmitLoading">Create</el-button>
+                <el-button type="primary" @click="submitForm('pending')" :loading="formSubmitLoading">Create</el-button>
+                <el-button type="info" @click="submitForm('draft')" :loading="formSubmitLoading" plain>Save as Draft</el-button>
                 <el-button @click="closeDrawer">Cancel</el-button>
             </div>
         </el-form>
@@ -203,6 +204,8 @@ import type {FormInstance, FormRules} from 'element-plus'
 import {useInvoiceStorage} from '@/composables/useInvoiceStorage';
 import {Invoice} from "~/types/Invoice";
 
+const router = useRouter();
+
 const filter = ref('')
 const options = [
     {
@@ -212,6 +215,12 @@ const options = [
 ]
 
 const {invoices, saveInvoice} = useInvoiceStorage();
+const redirectToInvoiceDetail = (invoiceId) => {
+    // Redirect to the invoice detail page
+    // router.push(`/detail/${invoiceId}`);
+    const url = new URL(`/detail/${invoiceId}`, window.location.origin)
+    window.location.href = url.toString()
+};
 
 const getStatusTagType = (status) => {
     switch (status) {
@@ -228,48 +237,6 @@ const getStatusTagType = (status) => {
 
 const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {day: 'numeric', month: 'short', year: 'numeric'})
-};
-
-const saveManualInvoice = () => {
-    const newInvoice = {
-        id: 'RT3082',
-        due: new Date('2023-08-20'),
-        clientName: 'Jane Smith',
-        amount: 2500,
-        status: 'pending',
-        sender: {
-            streetAddress: '123 Main St',
-            city: 'Anytown',
-            postCode: 12345,
-            country: 'Example Country',
-        },
-        client: {
-            name: 'Client Co.',
-            email: 'client@example.com',
-            streetAddress: '456 Client Ave',
-            city: 'Client City',
-            postCode: 54321,
-            country: 'Client Country',
-        },
-        dueDate: new Date('2023-08-20'),
-        itemList: [
-            {
-                item_name: 'Item 1',
-                qty: 2,
-                price: 500,
-                total: 1000,
-            },
-            {
-                item_name: 'Item 2',
-                qty: 3,
-                price: 300,
-                total: 900,
-            },
-        ],
-    };
-
-    saveInvoice(newInvoice as Invoice);
-    alert('Invoice saved successfully!');
 };
 
 const drawerVisible = ref(false);
@@ -358,7 +325,7 @@ const updateTotal = (item) => {
 
 const formSubmitLoading = ref(false);
 
-const submitForm = async () => {
+const submitForm = async (status: "draft" | "pending") => {
     formSubmitLoading.value = true;
     try {
         if (ruleFormRef.value) {
@@ -387,7 +354,7 @@ const submitForm = async () => {
                     postCode: invoiceRuleForm.clientPostCode,
                     country: invoiceRuleForm.clientCountry,
                 },
-                status: "draft",
+                status: status,
             };
 
             // Now formData is in the format of the Invoice interface
@@ -396,6 +363,11 @@ const submitForm = async () => {
             saveInvoice(formData as Invoice)
 
             // saveInvoice(invoiceRuleForm as Invoice)
+            ElNotification({
+                title: 'Success',
+                message: "Invoice Created",
+                type: 'success',
+            })
             console.log('🌍 Form data submitted successfully:');
             // Proceed with form submission logic here...
         } else {
@@ -406,6 +378,7 @@ const submitForm = async () => {
         // Handle any form validation errors or other unexpected errors here...
     }
     formSubmitLoading.value = false;
+    closeDrawer()
 };
 
 const resetForm = (formEl: FormInstance | undefined) => {

@@ -35,13 +35,24 @@ export function useInvoiceStorage() {
         saveInvoices(invoices.value);
     }
 
-    function updateInvoice(updatedInvoice: Invoice) {
-        const index = invoices.value.findIndex((invoice) => invoice.id === updatedInvoice.id);
+    function getInvoiceById(invoiceId: string): Invoice | undefined {
+        return invoices.value.find((invoice) => invoice.id === invoiceId);
+    }
+
+    function updateInvoice(updatedInvoice: Invoice, id: string): Invoice | null {
+        const index = invoices.value.findIndex((invoice) => invoice.id === id);
+        console.log("🌍 updatedInvoice", updatedInvoice);
+        console.log("🌍 index updateInvoice", index);
+
         if (index !== -1) {
-            invoices.value.splice(index, 1, updatedInvoice);
+            Object.assign(invoices.value[index], updatedInvoice);
             saveInvoices(invoices.value);
+            return invoices.value[index]; // Return the updated invoice
+        } else {
+            return null; // Return null if invoice with the specified ID is not found
         }
     }
+
 
     function deleteInvoice(invoiceId: string) {
         invoices.value = invoices.value.filter((invoice) => invoice.id !== invoiceId);
@@ -56,6 +67,7 @@ export function useInvoiceStorage() {
     return {
         invoices,
         saveInvoice,
+        getInvoiceById,
         updateInvoice,
         deleteInvoice,
     };
