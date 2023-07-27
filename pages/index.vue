@@ -24,7 +24,7 @@
 
         <div v-if="invoices.length > 0">
             <div class="main-content">
-                <el-card v-for="invoice in invoices" :key="invoice.id" shadow="hover" class="cursor-pointer">
+                <el-card v-for="invoice in filteredInvoices" :key="invoice.id" shadow="hover" class="cursor-pointer">
                     <div class="card-container" @click="redirectToInvoiceDetail(invoice.id)">
                         <div class="desktop-view">
                             <!-- Content for desktop view -->
@@ -208,13 +208,30 @@ const router = useRouter();
 
 const filter = ref('')
 const options = [
+    { label: 'All', value: '' },
     {
-        value: 'status',
-        label: 'Filter by status',
+        value: 'pending',
+        label: 'Pending',
+    },
+    {
+        value: 'draft',
+        label: 'Draft',
+    },
+    {
+        value: 'paid',
+        label: 'Paid',
     },
 ]
 
 const {invoices, saveInvoice} = useInvoiceStorage();
+
+const filteredInvoices = computed(() => {
+    if (!filter.value) {
+        return invoices.value; // If no filter is selected, return all invoices
+    } else {
+        return invoices.value.filter((invoice) => invoice.status === filter.value);
+    }
+});
 const redirectToInvoiceDetail = (invoiceId) => {
     // Redirect to the invoice detail page
     // router.push(`/detail/${invoiceId}`);
